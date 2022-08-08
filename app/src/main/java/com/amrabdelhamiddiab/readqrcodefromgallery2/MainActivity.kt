@@ -28,11 +28,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         button = findViewById(R.id.button)
         button2 = findViewById(R.id.button2)
-        val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(
-                Barcode.FORMAT_QR_CODE
-            ).build()
-        scanner = BarcodeScanning.getClient(options)
+
 
         button.setOnClickListener {
             openSomeActivityForResult()
