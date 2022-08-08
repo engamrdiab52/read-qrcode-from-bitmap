@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var button: Button
     private lateinit var button2: Button
     private lateinit var bitmap: Bitmap
-    private lateinit var inputImage: InputImage
     private lateinit var scanner: BarcodeScanner
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,24 +34,8 @@ class MainActivity : AppCompatActivity() {
             ).build()
         scanner = BarcodeScanning.getClient(options)
 
-        //Get the Bitmap
- /*       bitmap = BitmapFactory.decodeResource(resources, R.drawable.qrcodereal)
-        Log.d(TAG, "bitmap...........      $bitmap")
-*/
-
-        //Get the Input Image
-     /*   inputImage = InputImage.fromBitmap(bitmap, 0)
-        Log.d(TAG, "image................................$inputImage")
-*/
-
-
-
         button.setOnClickListener {
             openSomeActivityForResult()
-
-
-            //i will call it from inside activity result
-
         }
     }
 
@@ -60,27 +43,25 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
         resultLauncher.launch(intent)
     }
+
     private val resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 // There are no request codes
                 val data: Intent? = result.data
                 val imageUri = data?.data
-
                 // here i have the uri and will create the input image
                 try {
-                    inputImage = imageUri?.let { InputImage.fromFilePath(this, it) }!!
-                    getQrCodeValue()
+                    val inputImage = imageUri?.let { InputImage.fromFilePath(this, it) }!!
+                    getQrCodeValue(inputImage)
                 } catch (e: IOException) {
                     Log.d(TAG, e.message.toString())
                 }
-
-                //imageView.setImageURI(imageUri)
             }
         }
-    private fun getQrCodeValue() {
-        getTask().addOnSuccessListener { barcodes ->
-            Log.d(TAG, barcodes.size.toString())
+
+    private fun getQrCodeValue(inputImage: InputImage) {
+        scanner.process(inputImage).addOnSuccessListener { barcodes ->
             for (barcode in barcodes) {
                 when (barcode.valueType) {
                     Barcode.TYPE_TEXT -> {
@@ -89,26 +70,14 @@ class MainActivity : AppCompatActivity() {
                             "Barcode.TYPE_TEXT......................${barcode.displayValue.toString()}"
                         )
                     }
-                    Barcode.TYPE_URL -> {
-                        Log.d(
-                            TAG,
-                            "Barcode.TYPE_URL......................${barcode.displayValue.toString()}   ."
-                        )
-                        // Log.d(TAG, "Barcode.TYPE_UNKNOWN.......................")
-                    }
                 }
             }
-
+        }.addOnFailureListener {
+            Log.d(TAG, "Failure")
+        }.addOnCanceledListener {
+            Log.d(TAG, "Canceled")
         }
-            .addOnFailureListener {
-                Log.d(TAG, "Failure")
-            }.addOnCanceledListener {
-                Log.d(TAG, "Canceled")
-            }
     }
-
-    private fun getTask() = scanner.process(inputImage)
-
     companion object {
         const val TAG = "MainActivity"
     }
